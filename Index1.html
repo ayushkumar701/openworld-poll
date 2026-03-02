@@ -1,0 +1,1251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OpenPoll — Live Audience Engagement</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&family=Cabinet+Grotesk:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --surface2: #1a1a28;
+    --border: #2a2a3e;
+    --accent: #7c5cfc;
+    --accent2: #fc5c7d;
+    --accent3: #5cfcb8;
+    --accent4: #fcc45c;
+    --text: #f0f0ff;
+    --muted: #6a6a8a;
+    --radius: 16px;
+  }
+  * { margin:0;padding:0;box-sizing:border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Cabinet Grotesk', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* BG GRID */
+  body::before {
+    content:'';
+    position:fixed;inset:0;
+    background-image: linear-gradient(rgba(124,92,252,0.04) 1px, transparent 1px),
+                      linear-gradient(90deg, rgba(124,92,252,0.04) 1px, transparent 1px);
+    background-size: 48px 48px;
+    pointer-events:none;z-index:0;
+  }
+
+  /* ---- NAV ---- */
+  nav {
+    position: sticky;top:0;z-index:100;
+    display:flex;align-items:center;justify-content:space-between;
+    padding:16px 32px;
+    background: rgba(10,10,15,0.85);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+  }
+  .logo {
+    font-family:'Syne',sans-serif;font-weight:800;font-size:22px;
+    display:flex;align-items:center;gap:10px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  }
+  .logo-dot { width:10px;height:10px;border-radius:50%;background:var(--accent);display:inline-block;animation:pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(1.3)} }
+  nav .actions { display:flex;gap:12px; }
+  .btn {
+    padding:10px 20px;border-radius:10px;font-family:'Cabinet Grotesk',sans-serif;
+    font-size:14px;font-weight:700;cursor:pointer;border:none;transition:all .2s;
+  }
+  .btn-ghost { background:transparent;color:var(--muted);border:1px solid var(--border); }
+  .btn-ghost:hover { color:var(--text);border-color:var(--accent); }
+  .btn-primary { background:var(--accent);color:#fff; }
+  .btn-primary:hover { background:#9575ff;transform:translateY(-1px);box-shadow:0 8px 24px rgba(124,92,252,.4); }
+  .btn-danger { background: var(--accent2); color:#fff; }
+  .btn-success { background: var(--accent3); color:#0a0a0f; }
+
+  /* ---- MAIN LAYOUT ---- */
+  .container { max-width:1200px;margin:0 auto;padding:40px 24px;position:relative;z-index:1; }
+
+  /* ---- HERO ---- */
+  .hero {
+    text-align:center;padding:80px 20px 60px;
+  }
+  .hero-badge {
+    display:inline-flex;align-items:center;gap:8px;
+    background:rgba(124,92,252,.1);border:1px solid rgba(124,92,252,.3);
+    color:var(--accent);padding:6px 16px;border-radius:100px;font-size:13px;
+    font-family:'DM Mono',monospace;margin-bottom:28px;
+  }
+  .hero h1 {
+    font-family:'Syne',sans-serif;font-size:clamp(36px,7vw,88px);
+    font-weight:800;line-height:1.0;letter-spacing:-2px;margin-bottom:20px;
+  }
+  .hero h1 span { 
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 50%, var(--accent4) 100%);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  }
+  .hero p { font-size:18px;color:var(--muted);max-width:520px;margin:0 auto 40px;line-height:1.7; }
+  .hero-actions { display:flex;gap:16px;justify-content:center;flex-wrap:wrap; }
+  .btn-large { padding:16px 36px;font-size:16px;border-radius:14px; }
+
+  /* ---- TABS ---- */
+  .tabs {
+    display:flex;gap:4px;
+    background:var(--surface);border:1px solid var(--border);
+    border-radius:14px;padding:6px;margin-bottom:32px;
+    width:fit-content;
+  }
+  .tab {
+    padding:10px 22px;border-radius:10px;cursor:pointer;font-weight:600;
+    font-size:14px;color:var(--muted);transition:all .2s;border:none;background:none;
+  }
+  .tab.active { background:var(--accent);color:#fff; }
+  .tab:hover:not(.active) { color:var(--text); }
+
+  /* ---- SECTION TITLES ---- */
+  .section-title {
+    font-family:'Syne',sans-serif;font-size:28px;font-weight:800;margin-bottom:8px;
+  }
+  .section-sub { color:var(--muted);margin-bottom:28px;font-size:15px; }
+
+  /* ---- FEATURE GRID ---- */
+  .feature-grid {
+    display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;
+    margin-bottom:48px;
+  }
+  .feature-card {
+    background:var(--surface);border:1px solid var(--border);
+    border-radius:var(--radius);padding:24px 20px;
+    cursor:pointer;transition:all .25s;position:relative;overflow:hidden;
+  }
+  .feature-card:hover { border-color:var(--accent);transform:translateY(-3px); }
+  .feature-card.selected { border-color:var(--accent);background:rgba(124,92,252,.08); }
+  .feature-card .icon {
+    width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;
+    font-size:22px;margin-bottom:14px;
+  }
+  .feature-card h3 { font-size:15px;font-weight:700;margin-bottom:6px; }
+  .feature-card p { font-size:13px;color:var(--muted);line-height:1.5; }
+  .feature-card .check {
+    position:absolute;top:14px;right:14px;
+    width:22px;height:22px;border-radius:50%;background:var(--accent);
+    display:none;align-items:center;justify-content:center;font-size:12px;color:#fff;
+  }
+  .feature-card.selected .check { display:flex; }
+
+  /* ---- CREATOR ---- */
+  .creator-grid { display:grid;grid-template-columns:1fr 380px;gap:28px;align-items:start; }
+  @media(max-width:900px){ .creator-grid { grid-template-columns:1fr; } }
+
+  .card {
+    background:var(--surface);border:1px solid var(--border);
+    border-radius:var(--radius);padding:28px;
+  }
+
+  .form-group { margin-bottom:20px; }
+  .form-label { display:block;font-size:13px;font-weight:600;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px; }
+  .form-input, .form-select, .form-textarea {
+    width:100%;background:var(--bg);border:1px solid var(--border);
+    border-radius:10px;padding:12px 16px;color:var(--text);font-family:'Cabinet Grotesk',sans-serif;
+    font-size:15px;transition:border-color .2s;outline:none;
+  }
+  .form-input:focus, .form-select:focus, .form-textarea:focus { border-color:var(--accent); }
+  .form-input.error { border-color: var(--accent2); animation: shake 0.3s; }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-5px)} 75%{transform:translateX(5px)} }
+  .form-textarea { resize:vertical;min-height:100px; }
+  .form-select option { background:var(--surface2); }
+
+  .options-list { display:flex;flex-direction:column;gap:10px;margin-top:12px; }
+  .option-row { display:flex;gap:10px;align-items:center; }
+  .option-row .form-input { flex:1; }
+  .btn-icon { width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;border:none;font-size:16px; }
+  .btn-icon-remove { background:rgba(252,92,125,.15);color:var(--accent2); }
+  .btn-icon-add { background:rgba(124,92,252,.15);color:var(--accent);width:100%;height:36px;border-radius:8px;margin-top:8px;font-size:14px;font-weight:600;display:flex;align-items:center;justify-content:center;cursor:pointer;border:1px dashed rgba(124,92,252,.3);gap:6px; }
+
+  /* PREVIEW CARD */
+  .preview-card {
+    background:linear-gradient(135deg,var(--surface) 0%,var(--surface2) 100%);
+    border:1px solid var(--border);border-radius:var(--radius);
+    padding:28px;position:sticky;top:80px;
+  }
+  .preview-label { font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:16px; }
+  .preview-question { font-family:'Syne',sans-serif;font-size:20px;font-weight:700;margin-bottom:20px;line-height:1.3; }
+  .preview-options { display:flex;flex-direction:column;gap:10px; }
+  .preview-option {
+    background:rgba(124,92,252,.08);border:1px solid rgba(124,92,252,.2);
+    border-radius:10px;padding:12px 16px;font-size:14px;font-weight:500;
+    cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:space-between;
+  }
+  .preview-option:hover { background:rgba(124,92,252,.15);border-color:var(--accent); }
+  .preview-option.voted { background:rgba(124,92,252,.25);border-color:var(--accent); }
+  .bar-wrap { background:var(--bg);border-radius:100px;height:6px;flex:1;margin-left:12px;overflow:hidden; }
+  .bar { height:100%;border-radius:100px;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .6s cubic-bezier(.4,0,.2,1); }
+
+  /* ---- LIVE VIEW ---- */
+  .session-header {
+    display:flex;align-items:center;justify-content:space-between;
+    margin-bottom:32px;flex-wrap:wrap;gap:16px;
+  }
+  .join-code {
+    font-family:'DM Mono',monospace;font-size:36px;font-weight:500;
+    letter-spacing:6px;color:var(--accent3);
+    background:rgba(92,252,184,.05);border:1px solid rgba(92,252,184,.2);
+    padding:16px 28px;border-radius:14px;
+  }
+  @media (max-width: 480px) {
+    .join-code { font-size: 24px; letter-spacing: 3px; padding: 12px; }
+  }
+  .participants-badge {
+    background:var(--surface);border:1px solid var(--border);
+    border-radius:10px;padding:10px 20px;
+    font-size:14px;color:var(--muted);
+  }
+  .participants-badge strong { color:var(--text); }
+
+  .live-results { display:flex;flex-direction:column;gap:14px; }
+  .result-row { display:flex;align-items:center;gap:16px; }
+  .result-label { width:160px;font-size:14px;font-weight:600;flex-shrink:0; }
+  .result-bar-wrap { flex:1;background:var(--surface);border-radius:100px;height:32px;overflow:hidden;position:relative; }
+  .result-bar {
+    height:100%;border-radius:100px;
+    background:linear-gradient(90deg,var(--accent) 0%,var(--accent2) 100%);
+    transition:width .8s cubic-bezier(.4,0,.2,1);display:flex;align-items:center;padding-left:12px;
+    min-width:2px;
+  }
+  .result-bar.bar2 { background:linear-gradient(90deg,var(--accent2) 0%,var(--accent4) 100%); }
+  .result-bar.bar3 { background:linear-gradient(90deg,var(--accent3) 0%,var(--accent) 100%); }
+  .result-bar.bar4 { background:linear-gradient(90deg,var(--accent4) 0%,var(--accent3) 100%); }
+  .result-count { width:50px;text-align:right;font-family:'DM Mono',monospace;font-size:14px;color:var(--muted); }
+
+  /* WORD CLOUD */
+  .wordcloud { 
+    background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+    padding:32px;min-height:200px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:center;
+  }
+  .word-bubble {
+    padding:8px 18px;border-radius:100px;font-weight:700;cursor:default;
+    transition:transform .2s;animation:fadeIn .4s ease;
+  }
+  .word-bubble:hover { transform:scale(1.1); }
+  @keyframes fadeIn { from{opacity:0;transform:scale(.8)} to{opacity:1;transform:scale(1)} }
+
+  /* QUIZ */
+  .quiz-card {
+    background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:32px;
+  }
+  .quiz-question { font-family:'Syne',sans-serif;font-size:24px;font-weight:700;margin-bottom:24px; }
+  .quiz-options { display:grid;grid-template-columns:1fr 1fr;gap:12px; }
+  @media (max-width: 480px) {
+    .quiz-options { grid-template-columns: 1fr; }
+  }
+  .quiz-option {
+    padding:20px;border-radius:14px;font-size:16px;font-weight:600;cursor:pointer;
+    border:2px solid var(--border);background:var(--surface2);transition:all .2s;text-align:center;
+  }
+  .quiz-option:hover { border-color:var(--accent);transform:scale(1.02); }
+  .quiz-option.correct { border-color:var(--accent3);background:rgba(92,252,184,.1);color:var(--accent3); }
+  .quiz-option.wrong { border-color:var(--accent2);background:rgba(252,92,125,.1);color:var(--accent2); }
+  .timer-ring { width:60px;height:60px;position:relative;margin-left:auto; }
+  .timer-ring svg { transform:rotate(-90deg); }
+  .timer-ring circle { transition:stroke-dashoffset .9s linear; }
+  .timer-num {
+    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    font-family:'DM Mono',monospace;font-size:18px;font-weight:500;color:var(--accent4);
+  }
+
+  /* SETTINGS PANEL */
+  .settings-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px; }
+  .setting-row {
+    display:flex;align-items:center;justify-content:space-between;
+    background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 20px;
+  }
+  .setting-info { flex:1; }
+  .setting-name { font-size:15px;font-weight:600; }
+  .setting-desc { font-size:13px;color:var(--muted);margin-top:2px; }
+  .toggle {
+    width:48px;height:26px;border-radius:100px;position:relative;cursor:pointer;
+    border:none;transition:background .2s;flex-shrink:0;margin-left:16px;
+  }
+  .toggle.on { background:var(--accent); }
+  .toggle.off { background:var(--border); }
+  .toggle::after {
+    content:'';width:20px;height:20px;border-radius:50%;background:#fff;
+    position:absolute;top:3px;transition:left .2s;
+  }
+  .toggle.on::after { left:24px; }
+  .toggle.off::after { left:4px; }
+
+  /* SLIDE NAV */
+  .slide-nav {
+    display:flex;gap:8px;overflow-x:auto;padding-bottom:8px;margin-bottom:24px;
+    -webkit-overflow-scrolling: touch;
+  }
+  @media (max-width: 480px) {
+    .slide-nav { flex-wrap: nowrap; overflow-x: auto; }
+    .slide-thumb { min-width: 70px; font-size: 10px; }
+  }
+  .slide-thumb {
+    flex-shrink:0;width:100px;height:64px;border-radius:10px;
+    background:var(--surface);border:2px solid var(--border);
+    cursor:pointer;display:flex;align-items:center;justify-content:center;
+    font-size:11px;color:var(--muted);font-weight:600;text-align:center;padding:4px;transition:all .2s;
+  }
+  .slide-thumb.active { border-color:var(--accent);color:var(--accent); }
+  .slide-thumb:hover:not(.active) { border-color:var(--border);color:var(--text); }
+
+  /* SECTION PAGES */
+  .page { display:none; }
+  .page.active { display:block; }
+
+  /* STAT CARDS */
+  .stats-row { display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;margin-bottom:32px; }
+  .stat-card {
+    background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;
+  }
+  .stat-num { font-family:'Syne',sans-serif;font-size:36px;font-weight:800;margin-bottom:4px; }
+  .stat-label { font-size:13px;color:var(--muted); }
+  .stat-card .stat-num.green { color:var(--accent3); }
+  .stat-card .stat-num.purple { color:var(--accent); }
+  .stat-card .stat-num.pink { color:var(--accent2); }
+  .stat-card .stat-num.yellow { color:var(--accent4); }
+
+  /* NOTIFICATION */
+  .notif {
+    position:fixed;bottom:28px;right:28px;
+    background:var(--surface2);border:1px solid var(--border);
+    border-radius:14px;padding:16px 20px;max-width:320px;z-index:999;
+    display:flex;align-items:center;gap:12px;font-size:14px;
+    transform:translateX(120%);transition:transform .3s cubic-bezier(.4,0,.2,1);
+    box-shadow:0 24px 60px rgba(0,0,0,.5);
+  }
+  .notif.show { transform:translateX(0); }
+  .notif .icon { font-size:20px; }
+
+  .divider { border:none;border-top:1px solid var(--border);margin:28px 0; }
+  .flex { display:flex; }
+  .items-center { align-items:center; }
+  .justify-between { justify-content:space-between; }
+  .gap-12 { gap:12px; }
+  .mb-8 { margin-bottom:8px; }
+  .mb-16 { margin-bottom:16px; }
+  .mb-24 { margin-bottom:24px; }
+
+  .tag { display:inline-flex;align-items:center;padding:4px 10px;border-radius:6px;font-size:12px;font-weight:600; }
+  .tag-live { background:rgba(252,92,125,.15);color:var(--accent2); }
+  .tag-active { background:rgba(92,252,184,.15);color:var(--accent3); }
+  .tag-draft { background:rgba(124,92,252,.15);color:var(--accent); }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">
+    <span class="logo-dot"></span>
+    OpenPoll
+  </div>
+  <div class="actions">
+    <button class="btn btn-ghost" onclick="showPage('dashboard')">Dashboard</button>
+    <button class="btn btn-ghost" onclick="showPage('join')">Join Session</button>
+    <button class="btn btn-primary" onclick="showPage('create')">+ New Presentation</button>
+  </div>
+</nav>
+
+<!-- NOTIFICATION -->
+<div class="notif" id="notif">
+  <span class="icon">🎉</span>
+  <span id="notif-text">Saved successfully!</span>
+</div>
+
+<!-- ============ DASHBOARD ============ -->
+<div class="page active" id="page-dashboard">
+  <div class="container">
+    <div class="hero">
+      <div class="hero-badge">✦ Open Source &amp; Free Forever</div>
+      <h1>Engage your audience<br><span>in real-time</span></h1>
+      <p>The open-source alternative to Mentimeter. Polls, quizzes, word clouds, Q&amp;A — no limits, fully customizable.</p>
+      <div class="hero-actions">
+        <button class="btn btn-primary btn-large" onclick="showPage('create')">🚀 Create Presentation</button>
+        <button class="btn btn-ghost btn-large" onclick="showPage('join')">🔗 Join a Session</button>
+      </div>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-num purple" id="dashboard-presentations">12</div><div class="stat-label">Presentations</div></div>
+      <div class="stat-card"><div class="stat-num green" id="dashboard-responses">1,428</div><div class="stat-label">Total Responses</div></div>
+      <div class="stat-card"><div class="stat-num pink" id="dashboard-active">3</div><div class="stat-label">Active Sessions</div></div>
+      <div class="stat-card"><div class="stat-num yellow">97%</div><div class="stat-label">Engagement Rate</div></div>
+    </div>
+
+    <div class="flex items-center justify-between mb-16">
+      <div><div class="section-title">Recent Presentations</div></div>
+      <button class="btn btn-primary" onclick="showPage('create')">+ Create New</button>
+    </div>
+
+    <div class="feature-grid" id="recent-presentations">
+      <div class="feature-card" onclick="showPage('live')">
+        <div class="icon" style="background:rgba(124,92,252,.15);">📊</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <h3>Team All-Hands Q3</h3>
+          <span class="tag tag-live">● LIVE</span>
+        </div>
+        <p>5 slides · 234 participants</p>
+      </div>
+      <div class="feature-card" onclick="showPage('live')">
+        <div class="icon" style="background:rgba(252,92,125,.15);">🧠</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <h3>Product Knowledge Quiz</h3>
+          <span class="tag tag-active">Active</span>
+        </div>
+        <p>8 slides · 89 participants</p>
+      </div>
+      <div class="feature-card" onclick="showPage('create')">
+        <div class="icon" style="background:rgba(92,252,184,.15);">🗳️</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <h3>Customer Feedback</h3>
+          <span class="tag tag-draft">Draft</span>
+        </div>
+        <p>3 slides · Not started</p>
+      </div>
+      <div class="feature-card" onclick="showPage('create')" style="border-style:dashed;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;min-height:140px;">
+        <div style="font-size:32px;margin-bottom:12px;">+</div>
+        <h3>New Presentation</h3>
+      </div>
+    </div>
+
+    <div class="section-title mb-8">What would you like to create?</div>
+    <div class="section-sub">Choose a slide type to get started</div>
+    <div class="feature-grid" id="slide-type-grid">
+      <div class="feature-card" onclick="selectType(this,'poll')">
+        <div class="check">✓</div>
+        <div class="icon" style="background:rgba(124,92,252,.15);">📊</div>
+        <h3>Multiple Choice Poll</h3>
+        <p>Live voting with real-time bar or pie chart results</p>
+      </div>
+      <div class="feature-card" onclick="selectType(this,'wordcloud')">
+        <div class="check">✓</div>
+        <div class="icon" style="background:rgba(252,196,92,.15);">☁️</div>
+        <h3>Word Cloud</h3>
+        <p>Audience submits words, most popular appear bigger</p>
+      </div>
+      <div class="feature-card" onclick="selectType(this,'quiz')">
+        <div class="check">✓</div>
+        <div class="icon" style="background:rgba(92,252,184,.15);">🏆</div>
+        <h3>Quiz / Trivia</h3>
+        <p>Scored quiz with leaderboard and timed answers</p>
+      </div>
+      <div class="feature-card" onclick="selectType(this,'rating')">
+        <div class="check">✓</div>
+        <div class="icon" style="background:rgba(252,92,125,.15);">⭐</div>
+        <h3>Rating Scale</h3>
+        <p>NPS score, star ratings, or emoji reactions</p>
+      </div>
+      <div class="feature-card" onclick="selectType(this,'opentext')">
+        <div class="check">✓</div>
+        <div class="icon" style="background:rgba(124,92,252,.15);">💬</div>
+        <h3>Open Text Q&amp;A</h3>
+        <p>Free-form responses with moderation tools</p>
+      </div>
+      <div class="feature-card" onclick="selectType(this,'ranking')">
+        <div class="check">✓</div>
+        <div class="icon" style="background:rgba(252,196,92,.15);">🏅</div>
+        <h3>Ranking</h3>
+        <p>Drag-and-drop ordering, see audience consensus</p>
+      </div>
+      <div class="feature-card" onclick="selectType(this,'slider')">
+        <div class="check">✓</div>
+        <div class="icon" style="background:rgba(92,252,184,.15);">🎚️</div>
+        <h3>Slider / Scale</h3>
+        <p>Numeric scale input with distribution histogram</p>
+      </div>
+      <div class="feature-card" onclick="selectType(this,'pin')">
+        <div class="check">✓</div>
+        <div class="icon" style="background:rgba(252,92,125,.15);">📍</div>
+        <h3>Pin on Image</h3>
+        <p>Click locations on a map or image to respond</p>
+      </div>
+    </div>
+    <div style="text-align:center;margin-top:8px;">
+      <button class="btn btn-primary btn-large" onclick="showPage('create')">Build Your Presentation →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ CREATE ============ -->
+<div class="page" id="page-create">
+  <div class="container">
+    <div class="flex items-center justify-between mb-24">
+      <div>
+        <div class="section-title">Create Presentation</div>
+        <div class="section-sub">Build your interactive slide deck</div>
+      </div>
+      <div class="flex gap-12">
+        <button class="btn btn-ghost" onclick="showPage('dashboard')">← Back</button>
+        <button class="btn btn-success" onclick="saveAndLaunch()">🚀 Save &amp; Launch</button>
+      </div>
+    </div>
+
+    <!-- SLIDE NAV -->
+    <div class="slide-nav" id="slide-nav">
+      <div class="slide-thumb active" onclick="switchSlide(0,this)">Slide 1<br>Poll</div>
+      <div class="slide-thumb" onclick="switchSlide(1,this)">Slide 2<br>Word Cloud</div>
+      <div class="slide-thumb" onclick="switchSlide(2,this)">Slide 3<br>Quiz</div>
+      <div class="slide-thumb" style="border-style:dashed;" onclick="addSlide()">+ Add</div>
+    </div>
+
+    <div class="creator-grid">
+      <!-- EDITOR -->
+      <div>
+        <div class="card mb-16">
+          <div class="form-group">
+            <label class="form-label">Slide Type</label>
+            <select class="form-select" id="slide-type-select" onchange="updatePreview(); saveCurrentSlide();">
+              <option value="poll">📊 Multiple Choice Poll</option>
+              <option value="wordcloud">☁️ Word Cloud</option>
+              <option value="quiz">🏆 Quiz / Trivia</option>
+              <option value="rating">⭐ Rating Scale</option>
+              <option value="opentext">💬 Open Text Q&amp;A</option>
+              <option value="ranking">🏅 Ranking</option>
+              <option value="slider">🎚️ Slider</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Question</label>
+            <input class="form-input" id="question-input" placeholder="What do you think about...?" oninput="updatePreview(); saveCurrentSlide();" value="What's your favorite programming language?">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Options</label>
+            <div class="options-list" id="options-list">
+              <div class="option-row">
+                <input class="form-input" value="JavaScript" oninput="updatePreview(); saveCurrentSlide();">
+                <button class="btn-icon btn-icon-remove" onclick="removeOption(this)">✕</button>
+              </div>
+              <div class="option-row">
+                <input class="form-input" value="Python" oninput="updatePreview(); saveCurrentSlide();">
+                <button class="btn-icon btn-icon-remove" onclick="removeOption(this)">✕</button>
+              </div>
+              <div class="option-row">
+                <input class="form-input" value="TypeScript" oninput="updatePreview(); saveCurrentSlide();">
+                <button class="btn-icon btn-icon-remove" onclick="removeOption(this)">✕</button>
+              </div>
+              <div class="option-row">
+                <input class="form-input" value="Rust" oninput="updatePreview(); saveCurrentSlide();">
+                <button class="btn-icon btn-icon-remove" onclick="removeOption(this)">✕</button>
+              </div>
+            </div>
+            <div class="btn-icon-add" onclick="addOption()">+ Add Option</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="section-title mb-16" style="font-size:18px;">⚙️ Display Settings</div>
+          <div class="settings-grid">
+            <div class="setting-row">
+              <div class="setting-info">
+                <div class="setting-name">Show Results Live</div>
+                <div class="setting-desc">Audience sees votes as they come in</div>
+              </div>
+              <button class="toggle on" onclick="this.classList.toggle('on');this.classList.toggle('off'); saveSettings();"></button>
+            </div>
+            <div class="setting-row">
+              <div class="setting-info">
+                <div class="setting-name">Anonymous Voting</div>
+                <div class="setting-desc">Don't track who voted what</div>
+              </div>
+              <button class="toggle on" onclick="this.classList.toggle('on');this.classList.toggle('off'); saveSettings();"></button>
+            </div>
+            <div class="setting-row">
+              <div class="setting-info">
+                <div class="setting-name">Multiple Votes</div>
+                <div class="setting-desc">Allow voting for multiple options</div>
+              </div>
+              <button class="toggle off" onclick="this.classList.toggle('on');this.classList.toggle('off'); saveSettings();"></button>
+            </div>
+            <div class="setting-row">
+              <div class="setting-info">
+                <div class="setting-name">Timer</div>
+                <div class="setting-desc">Auto-close after time limit</div>
+              </div>
+              <button class="toggle off" onclick="this.classList.toggle('on');this.classList.toggle('off'); saveSettings();"></button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PREVIEW -->
+      <div class="preview-card">
+        <div class="preview-label">📱 Live Preview</div>
+        <div class="preview-question" id="preview-question">What's your favorite programming language?</div>
+        <div class="preview-options" id="preview-options">
+          <div class="preview-option" onclick="votePreview(this)">
+            JavaScript
+            <div class="bar-wrap"><div class="bar" style="width:65%"></div></div>
+          </div>
+          <div class="preview-option" onclick="votePreview(this)">
+            Python
+            <div class="bar-wrap"><div class="bar" style="width:45%"></div></div>
+          </div>
+          <div class="preview-option" onclick="votePreview(this)">
+            TypeScript
+            <div class="bar-wrap"><div class="bar" style="width:30%"></div></div>
+          </div>
+          <div class="preview-option" onclick="votePreview(this)">
+            Rust
+            <div class="bar-wrap"><div class="bar" style="width:20%"></div></div>
+          </div>
+        </div>
+        <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);font-size:13px;color:var(--muted);text-align:center;">
+          🔗 openpoll.app/join/<strong style="color:var(--accent3)">XK7P</strong>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ LIVE SESSION ============ -->
+<div class="page" id="page-live">
+  <div class="container">
+    <div class="session-header">
+      <div>
+        <div class="section-title">🔴 Live Session</div>
+        <div class="section-sub">Team All-Hands Q3 · <span class="tag tag-live">● Broadcasting</span></div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:12px;">
+        <div class="join-code" id="live-join-code">XK7P</div>
+        <div class="participants-badge">👥 <strong id="part-count">234</strong> participants</div>
+      </div>
+    </div>
+
+    <div class="tabs mb-24">
+      <button class="tab active" onclick="switchLiveTab('poll',this)">📊 Live Poll</button>
+      <button class="tab" onclick="switchLiveTab('wordcloud',this)">☁️ Word Cloud</button>
+      <button class="tab" onclick="switchLiveTab('quiz',this)">🏆 Quiz</button>
+      <button class="tab" onclick="switchLiveTab('qa',this)">💬 Q&amp;A</button>
+    </div>
+
+    <!-- POLL RESULTS -->
+    <div id="live-tab-poll">
+      <div class="card mb-16">
+        <div class="flex items-center justify-between mb-24">
+          <div class="preview-question" id="live-question" style="font-size:22px;">What's your favorite programming language?</div>
+          <button class="btn btn-primary" onclick="simulateVote()">+ Simulate Votes</button>
+        </div>
+        <div class="live-results" id="live-results">
+          <div class="result-row">
+            <div class="result-label" id="live-opt-0-label">JavaScript</div>
+            <div class="result-bar-wrap"><div class="result-bar" id="bar-0" style="width:62%"><span style="font-size:12px;color:rgba(255,255,255,.7)">62%</span></div></div>
+            <div class="result-count" id="cnt-0">145</div>
+          </div>
+          <div class="result-row">
+            <div class="result-label" id="live-opt-1-label">Python</div>
+            <div class="result-bar-wrap"><div class="result-bar bar2" id="bar-1" style="width:44%"><span style="font-size:12px;color:rgba(255,255,255,.7)">44%</span></div></div>
+            <div class="result-count" id="cnt-1">103</div>
+          </div>
+          <div class="result-row">
+            <div class="result-label" id="live-opt-2-label">TypeScript</div>
+            <div class="result-bar-wrap"><div class="result-bar bar3" id="bar-2" style="width:29%"><span style="font-size:12px;color:rgba(255,255,255,.7)">29%</span></div></div>
+            <div class="result-count" id="cnt-2">67</div>
+          </div>
+          <div class="result-row">
+            <div class="result-label" id="live-opt-3-label">Rust</div>
+            <div class="result-bar-wrap"><div class="result-bar bar4" id="bar-3" style="width:13%"><span style="font-size:12px;color:rgba(255,255,255,.7)">13%</span></div></div>
+            <div class="result-count" id="cnt-3">31</div>
+          </div>
+        </div>
+        <div style="margin-top:24px;display:flex;gap:12px;flex-wrap:wrap;">
+          <button class="btn btn-ghost" onclick="showPage('create')">← Edit Slides</button>
+          <button class="btn btn-primary" onclick="nextSlide()">Next Slide →</button>
+          <button class="btn btn-danger" onclick="endSession()">End Session</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- WORDCLOUD -->
+    <div id="live-tab-wordcloud" style="display:none;">
+      <div class="card mb-16">
+        <div class="preview-question mb-24" style="font-size:22px;" id="wordcloud-question">Describe AI in one word</div>
+        <div class="wordcloud" id="wordcloud-display"></div>
+        <div style="margin-top:20px;display:flex;gap:10px;">
+          <input class="form-input" id="word-input" placeholder="Add a word..." style="flex:1;" onkeydown="if(event.key==='Enter')addWord()">
+          <button class="btn btn-primary" onclick="addWord()">Submit</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- QUIZ -->
+    <div id="live-tab-quiz" style="display:none;">
+      <div class="quiz-card">
+        <div class="flex items-center justify-between mb-24">
+          <div class="quiz-question" id="quiz-question">What does HTTP stand for?</div>
+          <div class="timer-ring">
+            <svg width="60" height="60" viewBox="0 0 60 60">
+              <circle cx="30" cy="30" r="26" fill="none" stroke="var(--border)" stroke-width="4"/>
+              <circle id="timer-circle" cx="30" cy="30" r="26" fill="none" stroke="var(--accent4)" stroke-width="4"
+                stroke-dasharray="163" stroke-dashoffset="0"/>
+            </svg>
+            <div class="timer-num" id="timer-num">20</div>
+          </div>
+        </div>
+        <div class="quiz-options" id="quiz-options">
+          <div class="quiz-option" onclick="answerQuiz(this,false)">A) HyperText Markup Protocol</div>
+          <div class="quiz-option" onclick="answerQuiz(this,true)">B) HyperText Transfer Protocol</div>
+          <div class="quiz-option" onclick="answerQuiz(this,false)">C) High Transfer Text Protocol</div>
+          <div class="quiz-option" onclick="answerQuiz(this,false)">D) HyperText Tracking Protocol</div>
+        </div>
+        <div id="quiz-feedback" style="margin-top:20px;display:none;padding:16px;border-radius:12px;font-weight:600;"></div>
+        <div style="margin-top:20px;">
+          <div style="font-size:14px;color:var(--muted);margin-bottom:8px;">Leaderboard</div>
+          <div style="display:flex;flex-direction:column;gap:8px;" id="leaderboard">
+            <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:rgba(252,196,92,.08);border:1px solid rgba(252,196,92,.2);border-radius:10px;">
+              <span style="font-size:18px;">🥇</span><span style="flex:1;font-weight:600;">Alice Chen</span><span style="font-family:'DM Mono',monospace;color:var(--accent4);">2840 pts</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;">
+              <span style="font-size:18px;">🥈</span><span style="flex:1;font-weight:600;">Bob Smith</span><span style="font-family:'DM Mono',monospace;color:var(--muted);">2650 pts</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;">
+              <span style="font-size:18px;">🥉</span><span style="flex:1;font-weight:600;">Carol Jones</span><span style="font-family:'DM Mono',monospace;color:var(--muted);">2490 pts</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Q&A -->
+    <div id="live-tab-qa" style="display:none;">
+      <div class="card">
+        <div class="preview-question mb-24" style="font-size:22px;">💬 Live Q&amp;A</div>
+        <div id="qa-list" style="display:flex;flex-direction:column;gap:12px;margin-bottom:20px;">
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:16px 20px;">
+            <div style="font-size:15px;margin-bottom:8px;">What's the roadmap for next quarter?</div>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <span style="font-size:12px;color:var(--muted);">Anonymous · 2 min ago</span>
+              <button class="btn btn-ghost" style="padding:4px 10px;font-size:12px;" onclick="upvote(this)">👍 12</button>
+              <button class="btn btn-ghost" style="padding:4px 10px;font-size:12px;color:var(--accent3);">✓ Answer</button>
+            </div>
+          </div>
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:16px 20px;">
+            <div style="font-size:15px;margin-bottom:8px;">Will there be remote work options?</div>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <span style="font-size:12px;color:var(--muted);">Anonymous · 5 min ago</span>
+              <button class="btn btn-ghost" style="padding:4px 10px;font-size:12px;" onclick="upvote(this)">👍 7</button>
+              <button class="btn btn-ghost" style="padding:4px 10px;font-size:12px;color:var(--accent3);">✓ Answer</button>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;">
+          <input class="form-input" id="qa-input" placeholder="Ask a question..." style="flex:1;" onkeydown="if(event.key==='Enter')submitQuestion()">
+          <button class="btn btn-primary" onclick="submitQuestion()">Ask</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ JOIN ============ -->
+<div class="page" id="page-join">
+  <div class="container" style="max-width:480px;padding-top:80px;">
+    <div style="text-align:center;margin-bottom:40px;">
+      <div class="section-title" style="font-size:36px;">Join a Session</div>
+      <div class="section-sub">Enter the code shown on screen</div>
+    </div>
+    <div class="card">
+      <div class="form-group">
+        <label class="form-label">Session Code</label>
+        <input class="form-input" id="join-code" placeholder="e.g. XK7P" style="font-size:28px;text-align:center;letter-spacing:8px;font-family:'DM Mono',monospace;" maxlength="4" oninput="this.value=this.value.toUpperCase(); document.getElementById('join-code').classList.remove('error');">
+      </div>
+      <button class="btn btn-primary btn-large" style="width:100%" onclick="joinSession()">Join Now →</button>
+      <div style="text-align:center;margin-top:16px;font-size:13px;color:var(--muted);">
+        No account needed · Works on any device
+      </div>
+    </div>
+
+    <div style="margin-top:32px;text-align:center;">
+      <div style="color:var(--muted);font-size:14px;margin-bottom:16px;">Or try a demo</div>
+      <button class="btn btn-ghost" onclick="joinDemo()">🎮 Try Demo Session</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============ GLOBAL STATE ============
+let slides = [
+  { type: 'poll', question: "What's your favorite programming language?", options: ['JavaScript','Python','TypeScript','Rust'] },
+  { type: 'wordcloud', question: 'Describe AI in one word', options: [] },
+  { type: 'quiz', question: 'What does HTTP stand for?', options: ['A) HyperText Markup Protocol','B) HyperText Transfer Protocol','C) High Transfer Text Protocol','D) HyperText Tracking Protocol'], correct: 1 }
+];
+let currentSlide = 0;
+let votes = [145,103,67,31];
+let totalParticipants = 234;
+let words = [
+  {w:'Powerful',s:2.2,c:'var(--accent)'},
+  {w:'Revolutionary',s:1.5,c:'var(--accent2)'},
+  {w:'Future',s:1.8,c:'var(--accent3)'},
+  {w:'Intelligence',s:1.3,c:'var(--accent4)'},
+  {w:'Learning',s:1.6,c:'var(--accent)'},
+  {w:'Neural',s:1.1,c:'var(--accent2)'},
+  {w:'Data',s:1.4,c:'var(--accent3)'},
+  {w:'Magic',s:1.9,c:'var(--accent4)'},
+];
+let timerInterval = null;
+
+// ============ LOCAL STORAGE ============
+function saveToStorage() {
+  const state = {
+    slides: slides,
+    votes: votes,
+    totalParticipants: totalParticipants,
+    words: words,
+    presentations: [
+      { name: 'Team All-Hands Q3', slides: 5, participants: 234, status: 'live' },
+      { name: 'Product Knowledge Quiz', slides: 8, participants: 89, status: 'active' },
+      { name: 'Customer Feedback', slides: 3, participants: 0, status: 'draft' }
+    ]
+  };
+  localStorage.setItem('openpoll', JSON.stringify(state));
+}
+
+function loadFromStorage() {
+  const saved = localStorage.getItem('openpoll');
+  if (saved) {
+    try {
+      const state = JSON.parse(saved);
+      if (state.slides) slides = state.slides;
+      if (state.votes) votes = state.votes;
+      if (state.totalParticipants) totalParticipants = state.totalParticipants;
+      if (state.words) words = state.words;
+      
+      // Update dashboard stats
+      document.getElementById('dashboard-presentations').textContent = state.presentations?.length || 3;
+      document.getElementById('dashboard-responses').textContent = votes.reduce((a,b)=>a+b,0).toLocaleString();
+      
+      notify('Loaded saved data', '💾');
+    } catch (e) {
+      console.log('No saved data or error loading');
+    }
+  }
+}
+
+// ============ PAGE ROUTING ============
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  window.scrollTo(0,0);
+  
+  // Special handling for live page
+  if (name === 'live') {
+    updateLiveFromCurrentSlide();
+  }
+}
+
+// ============ NOTIFICATIONS ============
+function notify(msg, icon='✅') {
+  const n = document.getElementById('notif');
+  document.getElementById('notif-text').textContent = msg;
+  n.querySelector('.icon').textContent = icon;
+  n.classList.add('show');
+  setTimeout(() => n.classList.remove('show'), 3200);
+}
+
+// ============ FEATURE CARD SELECTION ============
+function selectType(card, type) {
+  document.querySelectorAll('#slide-type-grid .feature-card').forEach(c => c.classList.remove('selected'));
+  card.classList.add('selected');
+}
+
+// ============ PREVIEW & SLIDE MANAGEMENT ============
+function updatePreview() {
+  const q = document.getElementById('question-input').value;
+  document.getElementById('preview-question').textContent = q || 'Your question here...';
+  
+  const opts = [...document.querySelectorAll('#options-list .option-row input')].map(i => i.value);
+  const widths = [65,45,30,20,15,10,8,6];
+  const container = document.getElementById('preview-options');
+  
+  container.innerHTML = opts.map((o,i) => `
+    <div class="preview-option" onclick="votePreview(this)">
+      ${o || 'Option ' + (i+1)}
+      <div class="bar-wrap"><div class="bar" style="width:${widths[i]||8}%"></div></div>
+    </div>
+  `).join('');
+}
+
+function votePreview(el) {
+  document.querySelectorAll('.preview-option').forEach(o => o.classList.remove('voted'));
+  el.classList.add('voted');
+  
+  // Simulate vote increase
+  const bar = el.querySelector('.bar');
+  if (bar) {
+    const currentWidth = parseFloat(bar.style.width) || 0;
+    const newWidth = Math.min(currentWidth + 5, 100);
+    bar.style.width = newWidth + '%';
+  }
+  
+  notify('Vote registered! 🗳️');
+}
+
+function addOption() {
+  const list = document.getElementById('options-list');
+  const row = document.createElement('div');
+  row.className = 'option-row';
+  row.innerHTML = `<input class="form-input" placeholder="New option" oninput="updatePreview(); saveCurrentSlide();"><button class="btn-icon btn-icon-remove" onclick="removeOption(this)">✕</button>`;
+  list.appendChild(row);
+  row.querySelector('input').focus();
+  updatePreview();
+  saveCurrentSlide();
+}
+
+function removeOption(btn) {
+  btn.parentElement.remove();
+  updatePreview();
+  saveCurrentSlide();
+}
+
+function saveCurrentSlide() {
+  const type = document.getElementById('slide-type-select').value;
+  const question = document.getElementById('question-input').value;
+  const options = [...document.querySelectorAll('#options-list .option-row input')].map(i => i.value).filter(v => v.trim() !== '');
+  
+  slides[currentSlide] = {
+    type: type,
+    question: question,
+    options: options.length ? options : ['Option 1', 'Option 2', 'Option 3', 'Option 4']
+  };
+  
+  saveToStorage();
+}
+
+function loadSlide(index) {
+  saveCurrentSlide(); // Save previous first
+  
+  currentSlide = index;
+  const slide = slides[index] || { type: 'poll', question: 'New Slide', options: ['Option 1','Option 2','Option 3','Option 4'] };
+  
+  // Ensure slide has all properties
+  if (!slide.options) slide.options = ['Option 1','Option 2','Option 3','Option 4'];
+  
+  document.getElementById('slide-type-select').value = slide.type;
+  document.getElementById('question-input').value = slide.question;
+  
+  // Rebuild options
+  const list = document.getElementById('options-list');
+  list.innerHTML = '';
+  
+  (slide.options || []).forEach(opt => {
+    const row = document.createElement('div');
+    row.className = 'option-row';
+    row.innerHTML = `<input class="form-input" value="${opt.replace(/"/g, '&quot;')}" oninput="updatePreview(); saveCurrentSlide();"><button class="btn-icon btn-icon-remove" onclick="removeOption(this)">✕</button>`;
+    list.appendChild(row);
+  });
+  
+  if (slide.options.length === 0) {
+    addOption(); // Add default if empty
+  }
+  
+  updatePreview();
+}
+
+// ============ SLIDE NAV ============
+function switchSlide(idx, thumb) {
+  document.querySelectorAll('.slide-thumb').forEach(t => t.classList.remove('active'));
+  thumb.classList.add('active');
+  loadSlide(idx);
+}
+
+function addSlide() {
+  const nav = document.getElementById('slide-nav');
+  const addBtn = nav.lastElementChild;
+  const num = nav.children.length;
+  
+  // Add new slide to slides array
+  slides.push({ type: 'poll', question: `Slide ${num}`, options: ['Option 1','Option 2','Option 3','Option 4'] });
+  
+  const th = document.createElement('div');
+  th.className = 'slide-thumb';
+  th.textContent = `Slide ${num}\nNew`;
+  th.style.whiteSpace='pre';
+  th.onclick = () => switchSlide(num-1, th);
+  nav.insertBefore(th, addBtn);
+  
+  notify('Slide added!');
+  saveToStorage();
+}
+
+// ============ SAVE & LAUNCH ============
+function saveAndLaunch() {
+  saveCurrentSlide();
+  saveToStorage();
+  
+  // Generate random join code
+  const code = generateJoinCode();
+  document.getElementById('live-join-code').textContent = code;
+  
+  updateLiveFromCurrentSlide();
+  
+  notify('Presentation saved! Launching...', '🚀');
+  setTimeout(() => showPage('live'), 1000);
+}
+
+function generateJoinCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let code = '';
+  for(let i=0;i<4;i++) code += chars[Math.floor(Math.random() * chars.length)];
+  return code;
+}
+
+function updateLiveFromCurrentSlide() {
+  const slide = slides[currentSlide] || slides[0];
+  
+  // Update question
+  document.getElementById('live-question').textContent = slide.question || 'Question';
+  document.getElementById('wordcloud-question').textContent = slide.question || 'Describe in one word';
+  document.getElementById('quiz-question').textContent = slide.question || 'Quiz question';
+  
+  // Update options
+  if (slide.options && slide.options.length) {
+    for (let i = 0; i < 4; i++) {
+      const labelEl = document.getElementById(`live-opt-${i}-label`);
+      if (labelEl) labelEl.textContent = slide.options[i] || `Option ${i+1}`;
+    }
+    
+    // Update quiz options
+    const quizOptions = document.getElementById('quiz-options');
+    if (quizOptions && slide.options.length >= 4) {
+      quizOptions.innerHTML = slide.options.map((opt, i) => 
+        `<div class="quiz-option" onclick="answerQuiz(this,${i === (slide.correct || 1)})">${String.fromCharCode(65 + i)}) ${opt}</div>`
+      ).join('');
+    }
+  }
+  
+  // Reset quiz state
+  resetQuiz();
+}
+
+// ============ LIVE VOTES SIMULATION ============
+function simulateVote() {
+  const idx = Math.floor(Math.random()*votes.length);
+  votes[idx]++;
+  totalParticipants = votes.reduce((a,b)=>a+b,0);
+  
+  document.getElementById('part-count').textContent = totalParticipants;
+  
+  votes.forEach((v,i) => {
+    const pct = Math.round(v/totalParticipants*100);
+    const bar = document.getElementById('bar-'+i);
+    const cnt = document.getElementById('cnt-'+i);
+    if(bar) { 
+      bar.style.width = pct+'%'; 
+      if(bar.querySelector('span')) bar.querySelector('span').textContent = pct+'%';
+    }
+    if(cnt) cnt.textContent = v;
+  });
+  
+  saveToStorage();
+  notify(`New vote! Total: ${totalParticipants} 🗳️`, '🗳️');
+}
+
+// Auto-simulate votes every 2.5s
+setInterval(() => {
+  if(document.getElementById('page-live').classList.contains('active') && 
+     document.getElementById('live-tab-poll').style.display !== 'none') {
+    simulateVote();
+  }
+}, 2500);
+
+// ============ LIVE TABS ============
+function switchLiveTab(name, btn) {
+  ['poll','wordcloud','quiz','qa'].forEach(t => {
+    const el = document.getElementById('live-tab-'+t);
+    if(el) el.style.display = t===name?'block':'none';
+  });
+  document.querySelectorAll('.tabs .tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  
+  if (name === 'quiz') startTimer();
+}
+
+// ============ WORDCLOUD ============
+function renderWordcloud() {
+  const el = document.getElementById('wordcloud-display');
+  if(!el) return;
+  
+  el.innerHTML = words.map(w => 
+    `<div class="word-bubble" style="font-size:${w.s}em;background:${w.c}22;color:${w.c};border:1px solid ${w.c}44">${w.w}</div>`
+  ).join('');
+}
+
+function addWord() {
+  const inp = document.getElementById('word-input');
+  if (!inp) return;
+  
+  const val = inp.value.trim();
+  if(!val) return;
+  
+  const colors = ['var(--accent)','var(--accent2)','var(--accent3)','var(--accent4)'];
+  words.push({w:val, s:1+Math.random()*1.5, c:colors[Math.floor(Math.random()*colors.length)]});
+  inp.value='';
+  
+  renderWordcloud();
+  saveToStorage();
+  notify('Word added to cloud! ☁️','☁️');
+}
+
+// ============ QUIZ ============
+function startTimer() {
+  clearInterval(timerInterval);
+  
+  let timerVal = 20;
+  const timerEl = document.getElementById('timer-num');
+  const circle = document.getElementById('timer-circle');
+  
+  if (!timerEl || !circle) return;
+  
+  timerEl.textContent = timerVal;
+  circle.style.strokeDashoffset = '0';
+  
+  timerInterval = setInterval(() => {
+    timerVal--;
+    timerEl.textContent = timerVal;
+    circle.style.strokeDashoffset = (163 * (1 - timerVal/20)).toString();
+    
+    if(timerVal <= 0) { 
+      clearInterval(timerInterval); 
+      notify("Time's up! ⏰",'⏰');
+      
+      // Auto-reveal correct answer
+      document.querySelectorAll('.quiz-option').forEach(o => o.style.pointerEvents = 'none');
+      document.querySelectorAll('.quiz-option')[1].classList.add('correct');
+    }
+  }, 1000);
+}
+
+function resetQuiz() {
+  clearInterval(timerInterval);
+  
+  document.querySelectorAll('.quiz-option').forEach(o => {
+    o.style.pointerEvents = 'auto';
+    o.classList.remove('correct', 'wrong');
+  });
+  
+  const fb = document.getElementById('quiz-feedback');
+  if (fb) fb.style.display = 'none';
+}
+
+function answerQuiz(btn, correct) {
+  clearInterval(timerInterval);
+  
+  document.querySelectorAll('.quiz-option').forEach(o => o.style.pointerEvents='none');
+  btn.classList.add(correct ? 'correct' : 'wrong');
+  
+  if(!correct) {
+    // Highlight correct answer (assuming index 1 is correct)
+    document.querySelectorAll('.quiz-option')[1].classList.add('correct');
+  }
+  
+  const fb = document.getElementById('quiz-feedback');
+  fb.style.display='block';
+  fb.style.background = correct ? 'rgba(92,252,184,.1)' : 'rgba(252,92,125,.1)';
+  fb.style.color = correct ? 'var(--accent3)' : 'var(--accent2)';
+  fb.textContent = correct ? '🎉 Correct! +500 points' : '❌ Wrong! The answer was B.';
+  
+  saveToStorage();
+}
+
+// ============ Q&A ============
+function submitQuestion() {
+  const inp = document.getElementById('qa-input');
+  const val = inp.value.trim();
+  if(!val) return;
+  
+  const list = document.getElementById('qa-list');
+  const div = document.createElement('div');
+  div.style.cssText = 'background:rgba(124,92,252,.06);border:1px solid rgba(124,92,252,.2);border-radius:12px;padding:16px 20px;animation:fadeIn .3s ease;';
+  div.innerHTML = `<div style="font-size:15px;margin-bottom:8px;">${val}</div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <span style="font-size:12px;color:var(--muted);">You · just now</span>
+      <button class="btn btn-ghost" style="padding:4px 10px;font-size:12px;" onclick="upvote(this)">👍 0</button>
+    </div>`;
+  list.prepend(div);
+  inp.value='';
+  
+  notify('Question submitted! 🙋','🙋');
+  saveToStorage();
+}
+
+function upvote(btn) {
+  const n = parseInt(btn.textContent.replace('👍 ','')) + 1;
+  btn.textContent = '👍 ' + n;
+  notify('Upvoted!','👍');
+  saveToStorage();
+}
+
+// ============ JOIN ============
+function joinSession() {
+  const codeInput = document.getElementById('join-code');
+  const code = codeInput.value;
+  
+  if(code.length < 4) { 
+    notify('Code must be 4 characters', '⚠️');
+    codeInput.classList.add('error');
+    return; 
+  }
+  
+  document.getElementById('live-join-code').textContent = code;
+  notify(`Joining session ${code}...`,'🔗');
+  setTimeout(() => showPage('live'), 800);
+}
+
+function joinDemo() {
+  document.getElementById('join-code').value = 'XK7P';
+  joinSession();
+}
+
+// ============ SESSION CONTROLS ============
+function nextSlide() {
+  currentSlide = (currentSlide + 1) % slides.length;
+  updateLiveFromCurrentSlide();
+  notify('Moved to next slide', '➡️');
+  saveToStorage();
+}
+
+function endSession() {
+  if (confirm('End this session? All data will be saved.')) {
+    notify('Session ended', '🔴');
+    showPage('dashboard');
+  }
+}
+
+function saveSettings() {
+  saveToStorage();
+  notify('Settings saved', '⚙️');
+}
+
+// ============ INIT ============
+window.onload = function() {
+  renderWordcloud();
+  loadFromStorage();
+  
+  // Observe live page for quiz timer
+  const observer = new MutationObserver((mutations) => {
+    mutations.forEach((m) => {
+      if (m.target.id === 'page-live' && m.target.classList.contains('active')) {
+        const activeTab = document.querySelector('.tabs .tab.active');
+        if (activeTab && activeTab.textContent.includes('Quiz')) {
+          resetQuiz();
+          startTimer();
+        }
+      }
+    });
+  });
+  
+  const livePage = document.getElementById('page-live');
+  if (livePage) {
+    observer.observe(livePage, { attributes: true, attributeFilter: ['class'] });
+  }
+};
+</script>
+</body>
+</html>
